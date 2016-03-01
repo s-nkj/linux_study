@@ -5,6 +5,8 @@
 ########################################
 # 環境変数
 export LANG=ja_JP.UTF-8
+export LC_MESSAGES=en_US.UTF-8
+export EDITOR='vim'
 
 
 # 色を使用出来るようにする
@@ -12,7 +14,7 @@ autoload -Uz colors
 colors
 
 # emacs 風キーバインドにする
-bindkey -e
+# bindkey -e
 
 # ヒストリの設定
 HISTFILE=~/.zsh_history
@@ -127,6 +129,11 @@ alias cp='cp -i'
 alias mv='mv -i'
 
 alias mkdir='mkdir -p'
+
+# original alias
+if which nvim >/dev/null 2>$1 ; then
+    alias vim='nvim'
+fi
 
 # sudo の後のコマンドでエイリアスを有効にする
 alias sudo='sudo '

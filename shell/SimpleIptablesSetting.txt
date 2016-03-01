@@ -1,4 +1,12 @@
 # firewall for single machine
+# Initialized iptables
+iptables -F INPUT
+iptables -F OUTPUT
+iptables -F FORWARD
+# if you added other chain
+iptables -X TCP
+iptables -X UDP
+
 iptables -N TCP
 iptables -N UDP
 iptables -P FORWARD DROP
@@ -19,9 +27,13 @@ iptables -A TCP -p tcp --dport 22 -j ACCEPT
 iptables -A UDP -p udp --dport 53 -j ACCEPT
 iptables -I TCP -p tcp -m recent --update --seconds 60 --name TCP-PORTSCAN -j REJECT --reject-with tcp-reset
 iptables -D INPUT -p tcp -j REJECT --reject-with tcp-reset
-iptables -A INPUT -p tcp -m resent --set --name TCP-PORTSCAN -j REJECT --reject-with tcp-reset
+iptables -A INPUT -p tcp -m recent --set --name TCP-PORTSCAN -j REJECT --reject-with tcp-reset
 iptables -I UDP -p udp -m recent --update --seconds 60 --name UDP-PORTSCAN -j REJECT --reject-with icmp-port-unreachable
 iptables -D INPUT -p udp -j REJECT --reject-with icmp-port-unreachable
 iptables -A INPUT -p udp -m recent --set --name UDP-PORTSCAN -j REJECT --reject-with icmp-port-unreachable
 iptables -D INPUT -j REJECT --reject-with icmp-proto-unreachable
 iptables -A INPUT -j REJECT --reject-with icmp-proto-unreachable
+
+# confirm
+iptables-save
+# iptables -nvL --line-numbers

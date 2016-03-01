@@ -14,7 +14,9 @@ file=(`cat "$1"`)
 
 ln=0
 for line in "${file[@]}"; do
-    if [ ! "$(echo $line | cut -c 1)" = "#" ]; then
+    if [ ! "$(echo $line | cut -c 1)" = "#" -o ! "$line" = "" ]; then
+        # execute command
         echo $line
+        eval $line
     fi
 done

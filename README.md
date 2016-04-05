@@ -72,7 +72,7 @@ Linuxをインストールする前にまずはVirtual Boxに諸々の設定を�
 * [普段遣いのArchLinux](http://archlinux-blogger.blogspot.jp/p/blog-page.html)
 * [クロの思考ノート](http://note.kurodigi.com/category/arch-linux/)
 
-
+---
 ### _Linuxの環境構築（GUI構築前まで）_
 仮想マシンを起動して放置しておくといつの間にかroot画面が出ているので以下の要領でインストール作業を行う。
 
@@ -191,7 +191,7 @@ Linuxをインストールする前にまずはVirtual Boxに諸々の設定を�
           + grub : ブートローダ
       1. ブートローダのインストール  
           `grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=arch_grub --recheck`
-      1. ブータブルスタブの作成
+      1. ブータブルスタブの作成  
           ```
           mkdir -p /boot/EFI/boot
           cp /boot/EFI/arch_grub/grubx64.efi /boot/EFI/boot/bootx64.efi
@@ -201,7 +201,7 @@ Linuxをインストールする前にまずはVirtual Boxに諸々の設定を�
     1. 他ツールをインストール
         この手順はArch Linuxのインストール手順としては不要。  
         ただ素のままだと操作がし辛かったりするので使いそうなパッケージや、必要なパッケージを前もってインストールしているだけ。  
-        `pacman -S vim neovim git wget openssh reflector yaourt package-query`  
+        `pacman -S vim neovim git wget openssh reflector yaourt package-query virtualbox-guest-utils`  
         + vim : 言わずと知れたエディタソフト。neovimを通常使うため本来は不要だが、vimtutorなどが欲しいためインストール。
         + neovim : vimのリメイク版。
         + git : git本体
@@ -212,3 +212,157 @@ Linuxをインストールする前にまずはVirtual Boxに諸々の設定を�
             上のコマンドの意味は現在有効である国が「米国 or 日本 or 台湾」のサーバーを接続速度順にソートした後に200件抽出して、/etc/pacman.d/mirrorlistに保存する。
         + yaourt : 非公式リポジトリ(AUR)を使用するために必要。
         + package-query : 同上。（非公式リポジトリよりダウンロードしたパッケージのビルドに必要）
+        + virtualbox-guest-utils : VirtualBox上でLinuxを動かす場合に各サポートを行ってくれるパッケージ
+            + virtualbox.confの作成  
+              /etc/modules-load.d/virtualbox.confを作成し、以下の内容を記述する  
+              ```
+              vboxguest
+              vboxsf
+              vboxvideo
+              ```
+
+            + デーモンの有効化  
+                `systemctl enable vboxservice`  
+
+          note) virtualbox-guest-utilsインストール後、再起動をするとカーネルモジュールのロードに失敗することがある。  
+          その場合は、`linux-headers`をインストールすると状況が解消する。  
+
+    1. Arch Linuxの再起動
+    ```
+    exit
+    umount -R /mnt
+    shutdown -h now
+    ```
+
+一度VMをShutdownし、VirtualBoxの設定からISOをアンマウントし、再度起動する。  
+VMを起動するとCUIで立ち上がる（筈
+
+---
+### _GUI環境の構築_
+前項まででCUI環境の構築は終わったので、今度はGUI環境の構築を行う。  
+ついでに日本語化も実施する。
+
+1. Userの追加
+
+    1. Userの作成  
+        ```
+        useradd -m -g users -G wheel -s /bin/bash [User Name]
+        passwd [User Name]
+        ```
+    1. visudoの編集  
+        `visudo`を実行し、`%wheel ALL=(ALL) ALL`の行のコメントアウトを解除する。
+
+    1. User:rootの閉塞  
+        セキュリティの観点からrootユーザーを使えないようにする。  
+
+        1. root権限持ちのユーザー作成  
+            rootユーザーを閉塞する前にroot権限持ちの別ユーザーを作成する必要がある。  
+            ```
+            useradd -o -u 0 -g 0 -d /root -s /bin/bash [other_root]
+            ```
+
+        1. rootを閉塞  
+            root権限持ちユーザーが作成出来たら、rootの閉塞を行う
+            `vipw`と入力し、root行を探す。（多分1行目にある）  
+            root行をコピーして、root行の下に挿入。rootを[other_root]に変更する。  
+            root行の末尾の`/bin/bash`を`/bin/nologin`へ変更する。
+            `passwd [other_root]`でroot権限持ちのパスワードを設定し、作業終了。
+
+1. 時計合わせ  
+
+    1. timesyncdユニットの設定  
+        `sudo timedatectl set-ntp true`
+
+    1. timesyncd.confの修正  
+        `sudo vim /etc/systemd/timesyncd.conf`でファイルを開きNTPとFallbackNTPのコメントアウトを外し、NTPは以下のように編集する。
+        ```
+        [Time]
+        NTP=ntp1.jst.mfeed.ad.jp ntp2.jst.mfeed.ad.jp ntp3.jst.mfeed.ad.jp
+        FallbackNTP=0.arch.pool.ntp.org 1.arch.pool.ntp.org 2..arch.pool.ntp.org 3..arch.pool.ntp.org
+        ```
+
+    1. tymesyncdの稼働確認  
+        `sudo systemctl -l status systemd-timesyncd`と打ち、以下のような表記があれば良い。  
+        ```
+        Active : active(running)
+        Docs : man:systemd-timesyncd.service(8)
+        ```
+
+1. Dsiplay Manager / Desktopのインストール  
+
+    1. Xのインストール  
+        `sudo pacman -S xorg-xinit xorg-server-utils xorg-xclock xterm xorg-twm`  
+        note) VirtualBoxを使用していてかつvirtualbox-guest-utilsをインストールしている場合、xorg-serverも同時にインストールされる為上記コマンドからは除外している。VirtualBox以外の環境の場合はxorg-serverもコマンドに加える必要がある。  
+
+        1. Xの起動確認  
+            `startx`でXが正しく起動出来る事を確認。  
+            画面が表示されたら(ターミナルが3つほど起動している)最初からフォーカスのあるターミナルに`exit`を打つ込みCUIに戻る。  
+
+        1. xinitrcのコピーと編集
+            `cp /etc/X11/xinit/xinitrc ~/.xinitrc`  
+            xorg-xinitをインストールすることで作成されるxinitrcをホームディレクトリ直下にコピーし、以下の箇所を修正する。
+            ```
+            Before :
+            if [ -d /etc/X11/xinit/xinitrc.d ]; then
+              for f in /etc/X11/xinit/xinitrc.d/?*.sh ; do
+                [ -x "$f" ] && . "$f"
+              done
+              unset f
+            fi
+
+            After:
+            if [ -d /etc/X11/xinit/xinitrc.d ]; then
+              for f in /etc/X11/xinit/xinitrc.d/?* ; do <- ココ。?*.shを?*に変更
+                [ -x "$f" ] && . "$f"
+              done
+              unset f
+            fi
+            ```
+
+    1. ビデオドライバのインストール  
+        (VirtualBox環境では不要。後で埋められたら埋める)
+
+    1. Display Managerのインストール  
+        `sudo pacman -S lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings`  
+
+    1. Desktopのインストール  
+        正直デスクトップは何が良いかまだ分かっていない。  
+        興味があるものを試して合うものを探すしかない。  
+        取り敢えず自分的に一番安定しているcinnamonをインストール。  
+        `sudo pacman -S cinnamon nemo-fileroler`  
+
+    1. Display Managerのデーモン有効化  
+        `sudo systemctl enable lightdm.service`  
+        note) .serviceは省略しても良いかも
+
+    Linuxを再起動するか、`sudo systemctl start lightdm.service`を打てばGUI画面が起動する。
+
+1. Linuxの日本語化  
+    CUIでキーボードレイアウトを変更したが、GUIを起動するとまた英語キーボードがデフォルトになってしまう。  
+    これからの手順はGUI環境下でのキーボードレイアウトの日本語化及びに日本語入力の設定方法になる。
+
+    1. キーボードレイアウトの変更  
+        /usr/share/X11/xorg.conf.dの下にある10-evdev.confを編集する。
+        `sudo vim /usr/share/X11/xorg.conf.d/10-evdev.conf`  
+        10-evdev.confの以下の箇所にOptionを追加する。  
+        ```
+        Section "InputClass"
+          Identifier "evdev keyboard catchall"
+          MatchIsKeyboard "on"
+          MatchDevicePath "/dev/input/event*"
+          Driver "evdev"
+          Option "XkbModel" "jp106" ←ココ
+          Option "XkbLayout" "jp,us" ←ココ
+        ```
+
+    1. fcitxの設定  
+
+        1. パッケージのインストール
+            キーボードレイアウトを変えただけでは日本語入力できないのでfcitx(ファイティクス)と関連パッケージをインストールする。  
+            `sudo pacman -S fcitx fcitx-configtool fcitx-im fcitx-mozc`
+
+        1. fcitxの設定  
+            メニューからFcitx configurationを起動し下記の設定を行う。  
+            + Input Methodに存在するUSキーボードを削除し、日本語キーボード→mozcの順に追加する。
+            + Global Config -> Hotkey - Trigger Input MethodのCtl + Spaceの箇所で全角/半角キーを割り当てる。
+                Ctl + SpaceはEclipseなどの自動補完のキーと被るので変えておいた方が無難。

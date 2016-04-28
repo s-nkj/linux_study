@@ -1,0 +1,17 @@
+# Locale setting
+sed -i -e s/#en_US.UTF-8/en_US.UTF-8/gi -e s/#ja_JP.UTF-8/ja_JP.UTF-8/gi /etc/locale.gen
+echo LANG=en_US.UTF-8 > /etc/locale.conf
+export LANG=en_US.UTF-8
+
+# Keymap setting
+echo KEYMAP=jp106 > /etc/vconsole.conf
+
+# Timezone Setting
+ln -s /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+hwclock --systohc --utc
+
+# host setting
+echo [Your host name] > /etc/hostname
+set -i -e 's/\(localhost\)$/\1 [Your host name]/g' /etc/hosts
+
+# Pacman Setting

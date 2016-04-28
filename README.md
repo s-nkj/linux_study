@@ -71,6 +71,7 @@ Linuxをインストールする前にまずはVirtual Boxに諸々の設定を�
 構築時には他に以下のサイトも参考にした。
 * [普段遣いのArchLinux](http://archlinux-blogger.blogspot.jp/p/blog-page.html)
 * [クロの思考ノート](http://note.kurodigi.com/category/arch-linux/)
+* [Tecmint](http://www.tecmint.com/install-cinnamon-desktop-in-arch-linux/)
 
 ---
 ### _Linuxの環境構築（GUI構築前まで）_

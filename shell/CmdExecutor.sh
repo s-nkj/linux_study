@@ -17,6 +17,6 @@ for line in "${file[@]}"; do
     if [ ! "$(echo $line | cut -c 1)" = "#" -a ! "$line" = "" ]; then
         # execute command
         echo $line
-        eval $line
+        $($line)
     fi
 done

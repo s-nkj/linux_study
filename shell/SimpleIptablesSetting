@@ -21,10 +21,13 @@ iptables -A INPUT -p tcp --syn -m conntrack --ctstate NEW -j TCP
 iptables -A INPUT -p udp -j REJECT --reject-with icmp-port-unreachable
 iptables -A INPUT -p tcp -j REJECT --reject-with tcp-reset
 iptables -A INPUT -j REJECT --reject-with icmp-proto-unreachable
-iptables -A TCP -p tcp --dport 80 -j ACCEPT
-iptables -A TCP -p tcp --dport 443 -j ACCEPT
-iptables -A TCP -p tcp --dport 22 -j ACCEPT
-iptables -A UDP -p udp --dport 53 -j ACCEPT
+# HTTP用
+# iptables -A TCP -p tcp --dport 80 -j ACCEPT
+# SSLを使用する場合。
+# iptables -A TCP -p tcp --dport 443 -j ACCEPT
+# SSHの設定は適宜書き換え
+# iptables -A TCP -p tcp --dport 22 -j ACCEPT
+# iptables -A UDP -p udp --dport 53 -j ACCEPT
 iptables -I TCP -p tcp -m recent --update --seconds 60 --name TCP-PORTSCAN -j REJECT --reject-with tcp-reset
 iptables -D INPUT -p tcp -j REJECT --reject-with tcp-reset
 iptables -A INPUT -p tcp -m recent --set --name TCP-PORTSCAN -j REJECT --reject-with tcp-reset
@@ -35,5 +38,7 @@ iptables -D INPUT -j REJECT --reject-with icmp-proto-unreachable
 iptables -A INPUT -j REJECT --reject-with icmp-proto-unreachable
 
 # confirm
-iptables-save
 # iptables -nvL --line-numbers
+
+# Save settings
+iptables-save > /etc/iptables/iptables.rules

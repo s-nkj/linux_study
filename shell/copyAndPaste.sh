@@ -14,8 +14,9 @@ var=$(echo $var)
 
 cnt=$3
 
-for i in seq 1 ${#var[*]} 
-do
+for i in seq 1 "${#var[*]}"; do
     $(sed -i '${cnt}i/${var[i]}/' $1)
     cnt=$((cnt + 1))
 done
+
+exit 0

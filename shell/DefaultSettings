@@ -15,3 +15,27 @@ echo [Your host name] > /etc/hostname
 set -i -e 's/\(localhost\)$/\1 [Your host name]/g' /etc/hosts
 
 # Pacman Setting
+echo "[archlinuxfr]" >> /etc/pacman.conf
+echo "SigLevel = Never" >> /etc/pacman.conf
+echo "Server = http://repo.archlinux.fr/$arch" >> /etc/pacman.conf
+pacman -Syy
+
+# Package Install from Pacman
+pacman -S -y intel-ucode pacman -S dosfstools efibootmgr grub
+
+# Grub install
+grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=arch_grub --recheck
+mkdir -p /boot/EFI/boot
+cp /boot/EFI/arch_grub/grubx64.efi /boot/EFI/boot/bootx64.efi
+
+# Other package install from Pacman
+pacman -S -y vim neovim git wget openssh reflector yaourt package-query virtualbox-guest-utils linux-headers
+
+# mirrorlist update
+reflector --verbose -c 'United States' -c Japan -c Taiwan --sort rate -l 100 --save /etc/pacman.d/mirrorlist
+
+# virtualbox setting
+echo vboxguest > /etc/modules-load.d/virtualbox.conf
+echo vboxsf >> /etc/modules-load.d/virtualbox.conf
+echo vboxvideo >> /etc/modules-load.d/virtualbox.conf
+systemctl enable vboxservice

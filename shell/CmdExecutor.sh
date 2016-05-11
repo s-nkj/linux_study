@@ -18,5 +18,11 @@ for line in "${file[@]}"; do
         # execute command
         echo $line
         $($line)
+        if [ $? -eq 1 ]; then
+          echo "Command failed.($line)"
+          exit 1
+        fi
     fi
 done
+
+exit 0
